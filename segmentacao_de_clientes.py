@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import datetime
+import datetime as dt
 
 dados = pd.read_csv('BancoDeDados.csv')
 
@@ -29,3 +29,17 @@ def plot_perc(st,dados):
 plot_perc('estado_cliente',dados)
 
 plot_perc('estado_vendedor',dados)
+
+plot_perc('pagamento_tipo', dados)
+
+df_olist= dados[['id_unico_cliente','id_cliente','horario_pedido','item_id','preco']]
+
+#Agrupando pelo id cliente e pegando as datas dos pedidos para calcular a recencia
+df_compra = dados.groupby('id_unico_cliente').horario_pedido.max().reset_index()
+df_compra.columns=['id_unico_cliente', 'DataMaxCompra']
+df_compra['DataMaxCompra'] = pd.to_datetime(df_compra['DataMaxCompra'])
+
+#Calcula recencia
+df_compra['Recencia'] = (df_compra['DataMaxCompra'].max()-df_compra['DataMaxCompra']).dt.days
+
+df_usuario = pd.merge(df_olist,df_compra[['id_unico_cliente','Recencia']],on='id_unico_cliente')
