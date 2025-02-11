@@ -56,7 +56,7 @@ def calcular_wcss(data):
         elbow.append(kmeans.inertia_ )
     return elbow
 
-#KMeans espera um array-like 2d então tem que passar um dataframe não uma series
+# KMeans espera um array-like 2d então tem que passar um dataframe não uma series
 df_recencia= df_usuario[['Recencia']]
 
 elbow = calcular_wcss(df_recencia)
@@ -87,5 +87,22 @@ def numero_otimo_clusters(elbow):
     return distancia.index(max(distancia))+1
 
 n_clusters = numero_otimo_clusters(elbow)
-print(n_clusters)
+
+# Clusterizaçao com base na recencia
+kmeans =KMeans(n_clusters=n_clusters)
+df_usuario['RecenciaCluster']=kmeans.fit_predict(df_recencia)
+
+# Atribuicao de notas: maior nota -> menor recencia -> menor label
+# Reatribuir labels de maneira ordenada
+
+def ordenador_cluster(cluster_name,target_name,df):
+    grouped_by_cluster = df_usuario.groupby(cluster_name)[target_name].mean().reset_index()
+    grouped_by_cluster_ordered = grouped_by_cluster.sort_values(by=target_name,ascending=False).reset_index(drop=True)
+    grouped_by_cluster_ordered['index']=grouped_by_cluster_ordered.index
+    joining_cluster = pd.merge(df,grouped_by_cluster_ordered[[cluster_name,'index']],on=cluster_name)
+    removing_data = joining_cluster.drop([cluster_name],axis=1)
+    df_final = removing_data.rename(columns={'index':cluster_name})
+    return df_final
+
+df_usuario=ordenador_cluster('RecenciaCluster', 'Recencia', df_usuario)
         
