@@ -95,14 +95,32 @@ df_usuario['RecenciaCluster']=kmeans.fit_predict(df_recencia)
 # Atribuicao de notas: maior nota -> menor recencia -> menor label
 # Reatribuir labels de maneira ordenada
 
-def ordenador_cluster(cluster_name,target_name,df):
+# Funcao recebe o label do atributo, o atributo clusterizado, o banco de dados e o critétio para pontuação
+## Para recencia, quanto menor maior a pontuação, para a frequencia, o contrario
+def ordenador_cluster(cluster_name,target_name,df, ascending):
     grouped_by_cluster = df_usuario.groupby(cluster_name)[target_name].mean().reset_index()
-    grouped_by_cluster_ordered = grouped_by_cluster.sort_values(by=target_name,ascending=False).reset_index(drop=True)
+    grouped_by_cluster_ordered = grouped_by_cluster.sort_values(by=target_name,ascending=ascending).reset_index(drop=True)
     grouped_by_cluster_ordered['index']=grouped_by_cluster_ordered.index
     joining_cluster = pd.merge(df,grouped_by_cluster_ordered[[cluster_name,'index']],on=cluster_name)
     removing_data = joining_cluster.drop([cluster_name],axis=1)
     df_final = removing_data.rename(columns={'index':cluster_name})
     return df_final
 
-df_usuario=ordenador_cluster('RecenciaCluster', 'Recencia', df_usuario)
+df_usuario=ordenador_cluster('RecenciaCluster', 'Recencia', df_usuario, False)
+
+# Seguimos a mesma pipeline para a frequencia:
+# Agrupa por id do cliente e pega a frequencia de compra, calcula a frequencia, faz o merge com o banco de dados
+# Roda a clusterizaçao na frequencia e faz ordenaçaõ para pontuar
+
+df_frequencia = dados.groupby('id_unico_cliente').pedido_aprovado.count().reset_index()
+df_frequencia.columns = ['id_unico_cliente','Frequencia']
+
+df_usuario = pd.merge(df_usuario,df_frequencia,on='id_unico_cliente')
+
+df_frequencia = df_usuario[['Frequencia']]
+df_usuario['FrequenciaCluster']=kmeans.fit_predict(df_frequencia)
+
+df_usuario=ordenador_cluster('FrequenciaCluster', 'Frequencia', df_usuario, True)
+
+#df_usuario.groupby('FrequenciaCluster')['Frequencia'].describe()
         
