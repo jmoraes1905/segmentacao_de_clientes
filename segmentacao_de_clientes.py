@@ -123,4 +123,16 @@ df_usuario['FrequenciaCluster']=kmeans.fit_predict(df_frequencia)
 df_usuario=ordenador_cluster('FrequenciaCluster', 'Frequencia', df_usuario, True)
 
 #df_usuario.groupby('FrequenciaCluster')['Frequencia'].describe()
-        
+
+#Seguimos o mesmo procedimento para a receita
+df_receita = dados.groupby('id_unico_cliente').pagamento_valor.sum().reset_index()
+df_receita.columns=['id_unico_cliente','Receita']
+
+df_usuario = pd.merge(df_usuario,df_receita,on='id_unico_cliente')
+
+df_receita= df_usuario[['Receita']]
+df_usuario['ReceitaCluster']=kmeans.fit_predict(df_receita)
+
+df_usuario= ordenador_cluster("ReceitaCluster", "Receita", df_usuario, True)
+
+#df_usuario.groupby('ReceitaCluster')['Receita'].describe()
