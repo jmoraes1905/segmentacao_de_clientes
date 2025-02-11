@@ -136,3 +136,19 @@ df_usuario['ReceitaCluster']=kmeans.fit_predict(df_receita)
 df_usuario= ordenador_cluster("ReceitaCluster", "Receita", df_usuario, True)
 
 #df_usuario.groupby('ReceitaCluster')['Receita'].describe()
+
+# Atribuindo as pontuações em um novo banco
+
+df_final = df_usuario[['id_unico_cliente', 'Recencia','RecenciaCluster','Frequencia','FrequenciaCluster','Receita','ReceitaCluster']]
+
+df_final['Pontuacao'] = df_final['RecenciaCluster'] + df_final['FrequenciaCluster'] + df_final['ReceitaCluster']
+
+df_final['Segmento'] = 'Inativo'
+
+df_final.loc[df_final['Pontuacao']>=1,'Segmento'] ='Business'
+df_final.loc[df_final['Pontuacao']>=3,'Segmento'] ='Master'
+df_final.loc[df_final['Pontuacao']>=5,'Segmento'] ='Premium'
+
+#df_final['Segmento'].value_counts()
+
+df_final.to_csv('RFM.csv')
