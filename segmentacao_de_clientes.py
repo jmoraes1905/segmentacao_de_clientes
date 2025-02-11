@@ -43,3 +43,49 @@ df_compra['DataMaxCompra'] = pd.to_datetime(df_compra['DataMaxCompra'])
 df_compra['Recencia'] = (df_compra['DataMaxCompra'].max()-df_compra['DataMaxCompra']).dt.days
 
 df_usuario = pd.merge(df_olist,df_compra[['id_unico_cliente','Recencia']],on='id_unico_cliente')
+
+# Utilizando o metodo de elbow para clusterizar com base na recencia
+from sklearn.cluster import KMeans
+
+def calcular_wcss(data):
+    elbow=[]
+    for k in range(1,10):
+        kmeans = KMeans(n_clusters=k, init='random',random_state=42, max_iter=300)
+        kmeans.fit(data)
+        data['Cluster'] = kmeans.labels_
+        elbow.append(kmeans.inertia_ )
+    return elbow
+
+#KMeans espera um array-like 2d então tem que passar um dataframe não uma series
+df_recencia= df_usuario[['Recencia']]
+
+elbow = calcular_wcss(df_recencia)
+
+plt.figure(figsize=(10,5))
+plt.plot(elbow)
+plt.xlabel('Numero de clusters')
+plt.show()
+
+# Numero otimo de clusters
+
+import math
+
+def numero_otimo_clusters(elbow):
+    x0, y0 = 1, elbow[0]
+    x1, y1 = len(elbow),elbow[len(elbow)-1]
+    
+    distancia =[]
+    for i in range(len(elbow)):
+        x = i+1
+        y= elbow[i]
+        
+        numerador = abs((y1-y0)*x -(x1-x0)*y + x1*y0 -y1*x0)
+        denominador = math.sqrt((y1-y0)**2 +(x1-x0)**2)
+        
+        distancia.append(numerador/denominador) 
+        
+    return distancia.index(max(distancia))+1
+
+n_clusters = numero_otimo_clusters(elbow)
+print(n_clusters)
+        
